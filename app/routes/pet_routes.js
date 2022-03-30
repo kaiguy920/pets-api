@@ -70,8 +70,47 @@ router.post('/pets', requireToken, (req, res, next) => {
 
 
 // UPDATE
+// PATCH /pets/624470c12ed7079ead53d4df
+router.patch('/pets/:id', requireToken, removeBlanks, (req, res, next) => {
+    // if the client attempts to change the ownder of the pet, we can disallow that from the getgo
+    delete req.body.owner
+    // then we find the pet by the id
+    // not doing findByIdAndUpdate to be able to add in the custom middleware for success/error messaging
+    Pet.findById(req.params.id)
+        // handle our 404
+        .then(handle404)
+        // requireOwndership & update the pet
+        .then(pet => {
+            requireOwnership(req, pet)
+
+            return pet.updateOne(req.body.pet)
+        })
+        // send a 204, no content, if successful
+        .then(() => res.sendStatus(204))
+        // pass to errorHandler if not succesfull
+        .catch(next)
+})
 
 // REMOVE
+// DELETE /pets/624470c12ed7079ead53d4df
+router.delete('/pets/:id', requireToken, (req, res, next) => {
+    // then find the pet by id
+    Pet.findById(req.params.id)
+        // first, handle 404 if any
+        .then(handle404)
+        // use requireOwnership middleware to make sure the right person is making this request
+        .then(pet => {
+            // requireOwnership needs two arguments
+            // these are the req, and the document itself
+            requireOwnership(req, pet)
+            // delete if the middleware doesn't throw an error
+            pet.deleteOne()
+        })
+        .then(() => res.sendStatus(204))
+        // send back a 204 no content status
+        // if error occurs, pass to the handler
+        .catch(next)
+})
 
 // ROUTES ABOVE HERE
 
