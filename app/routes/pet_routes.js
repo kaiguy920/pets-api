@@ -82,7 +82,7 @@ router.patch('/pets/:id', requireToken, removeBlanks, (req, res, next) => {
         // requireOwndership & update the pet
         .then(pet => {
             requireOwnership(req, pet)
-
+            // updateOne saves the object
             return pet.updateOne(req.body.pet)
         })
         // send a 204, no content, if successful
